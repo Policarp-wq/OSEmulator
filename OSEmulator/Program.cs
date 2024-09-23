@@ -1,5 +1,4 @@
 ﻿using System.IO.Compression;
-using System.Linq;
 using System.Text.Json;
 
 namespace OSEmulator
@@ -207,14 +206,14 @@ namespace OSEmulator
             Console.ForegroundColor = ConsoleColor.Green;
             if (args.Length == 0)
             {
-                Console.WriteLine("Ошибка! Не заданы ключи запуска!");
+                Console.WriteLine("Invalid startup keys!");
                 Console.ResetColor();
                 Environment.Exit(-1);
             }
             if (args.Length % 2 != 0)
             {
-                Console.WriteLine("Ошибка! Неверно заданы ключи запуска!" +
-                    " Их должно быть чётное количество, но найдено: " + args.Length);
+                Console.WriteLine("Invalid startup keys!" +
+                    "There are must be even number of keys, but found: " + args.Length);
                 Console.ResetColor();
                 Environment.Exit(-1);
             }
@@ -351,32 +350,23 @@ namespace OSEmulator
             //vrtlOS,
             //logpth,
             //startsrc
-            args = ["--user",
-                "Policarp",
-                "--pcn",
-                "MHHUT-DDOS",
-                "--vrtlos",
-                "C:\\Users\\Policarp\\Desktop\\VirtualOS.zip",
-                "--logpth",
-                "C:\\Users\\Policarp\\Desktop\\log.txt",
-                "--startsrc",
-                "C:\\Users\\Policarp\\Desktop\\script.txt"
-            ];
+            //args = ["--user",
+            //    "Policarp",
+            //    "--pcn",
+            //    "MHHUT-DDOS",
+            //    "--vrtlos",
+            //    "C:\\Users\\Policarp\\Desktop\\VirtualOS.zip",
+            //    "--logpth",
+            //    "C:\\Users\\Policarp\\Desktop\\log.txt",
+            //    "--startsrc",
+            //    "C:\\Users\\Policarp\\Desktop\\script.txt"
+            //];
 
             //dotnet run --project C:\Users\Policarp\source\repos\OSEmulator\OSEmulator --user policarp --pcn DESKTOP --vrtlos C:\\Users\\Policarp\\Desktop\\VirtualOS.zip --logpth C:\\Users\\Policarp\\Desktop\\log.txt --startsrc C:\\Users\\Policarp\\Desktop\\script.txt
 
 
             OS system = OS.Init(args);
             system.Start();
-            //C:\Users\Policarp\source\repos\OSEmulator\OSEmulator.sln
-            //OS.VirtualPath virtualPath = new OS.VirtualPath("C:\\Users\\Policarp\\Desktop\\VirtualOS.zip");
-            //OS.VirtualPath virtualPath = new OS.VirtualPath("C:\\Users\\Policarp\\source\\repos\\OSEmulator");
-            //while (true)
-            //{
-            //    virtualPath.SetPosition(Console.ReadLine());
-            //    Console.WriteLine(virtualPath.CurrentPath);
-
-            //}
         }
 
     }

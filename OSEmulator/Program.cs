@@ -1,4 +1,5 @@
-﻿using System.IO.Compression;
+﻿using System.IO;
+using System.IO.Compression;
 using System.Text.Json;
 
 namespace OSEmulator
@@ -15,6 +16,8 @@ namespace OSEmulator
             private string _currentPath;
             private ZipArchive _archive;
 
+            private Dictionary<string, string> _owners;
+
             public string CurrentPath => _currentPath.TrimEnd('/');
 
             public VirtualPath(string osDir)
@@ -23,6 +26,7 @@ namespace OSEmulator
                 _archive = ZipFile.OpenRead(_zipPath);
                 _home = _archive.Entries[0].FullName.TrimEnd('/');
                 _currentPath = _home;
+                _owners = new Dictionary<string, string>();
 
                 _archive.Dispose();
             }
@@ -31,11 +35,12 @@ namespace OSEmulator
             {
                 _archive = ZipFile.OpenRead(_zipPath);
                 int parts = _currentPath.Split('/').Length;
-                foreach(var file in _archive.Entries)
+                foreach (var file in _archive.Entries)
                 {
-                    if(file.FullName.StartsWith(_currentPath)
+                    if (file.FullName.StartsWith(_currentPath)
                         && file.FullName.Split('/', StringSplitOptions.RemoveEmptyEntries).Length - 1 == parts)
-                        yield return file.FullName.TrimEnd('/');
+                        yield return file.FullName.TrimEnd('/') + " --> " 
+                            + (_owners.ContainsKey(file.FullName.TrimEnd('/')) ? _owners[file.FullName.TrimEnd('/')] : "not set");
                 }
             }
 
@@ -57,7 +62,7 @@ namespace OSEmulator
                         return;
                     _currentPath = _currentPath.Substring(0, _currentPath.LastIndexOf('/'));
                     //Если ../
-                    if(rest.Length > 2)
+                    if (rest.Length > 2)
                         Walkthrough(rest.Substring(1));
                     return;
                 }
@@ -75,32 +80,57 @@ namespace OSEmulator
                     parts = [rest, ""];
                 }
                 else parts = rest.Split('/', 2);
-                string forward = _currentPath + "/" + parts[0] ;
+                string forward = _currentPath + "/" + parts[0];
                 if (_archive.GetEntry(forward + "/") == null)
                     throw new FileNotFoundException("Directory doesn't exist! -> " + forward);
                 _currentPath = forward;
                 Walkthrough(parts[1]);
             }
 
-            public void SetPosition(string path)
+            public void ChangeOwner(string filePath, string owner)
+            {
+                string path = GetAbsolutePosition(filePath);
+                if (string.IsNullOrEmpty(path))
+                    return;
+                if (_owners.ContainsKey(path))
+                    _owners[path] = owner;
+                else _owners.Add(path, owner);
+            }
+
+            public string GetOwner(string filePath)
+            {
+                string path = GetAbsolutePosition(filePath);
+                if(string.IsNullOrEmpty(path) || !_owners.ContainsKey(path)) return "Invalid file path";
+                return _owners[path];
+            }
+
+            public string GetAbsolutePosition(string path)
             {
                 _archive = ZipFile.OpenRead(_zipPath);
                 string copy = _currentPath;
+                string res = _home;
                 try
                 {
-                    if(path == "~")
+                    if (path == "~")
                     {
-                        path = _home;
-                        return;
+                        res = _home;
                     }
                     Walkthrough(path);
+                    res = _currentPath;
                 }
                 catch (FileNotFoundException ex)
                 {
-                    _currentPath = copy;
+                    
                     Console.WriteLine(ex.Message);
                 }
+                _currentPath = copy;
                 _archive.Dispose();
+                return res;
+            }
+
+            public void SetPosition(string path)
+            {
+                _currentPath = GetAbsolutePosition(path);
             }
 
             public void CloseArchive()
@@ -156,6 +186,8 @@ namespace OSEmulator
             ls,
             cd,
             whoami,
+            chmod,
+            help,
             undefined
         }
 
@@ -202,7 +234,6 @@ namespace OSEmulator
         public static OS Init(string[] args)
         {
             Console.Clear();
-            ConsoleColor userColor = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Green;
             if (args.Length == 0)
             {
@@ -329,6 +360,21 @@ namespace OSEmulator
                 if (commandParts.Length == 2)
                     _virtualPath.SetPosition(commandParts[1]);
             }
+            else if(cmd == Commands.chmod)
+            {
+                if(commandParts.Length == 3)
+                    _virtualPath.ChangeOwner(commandParts[1], commandParts[2]);
+            }
+            else if(cmd == Commands.help)
+            {
+                foreach (var el in Enum.GetValues(typeof(Commands)))
+                {
+                    if ((Commands)el != Commands.help && (Commands)el != Commands.undefined)
+                    {
+                        Console.WriteLine(el.ToString());
+                    }
+                }
+            }
             else if (cmd == Commands.exit)
             {
                 Stop();
@@ -337,6 +383,11 @@ namespace OSEmulator
             {
                 Console.WriteLine("Invalid command!");
             }
+        }
+
+        private void Print(string msg)
+        {
+            Console.WriteLine(msg);
         }
     }
 
@@ -362,8 +413,8 @@ namespace OSEmulator
             //    "C:\\Users\\Policarp\\Desktop\\script.txt"
             //];
 
-            //dotnet run --project C:\Users\Policarp\source\repos\OSEmulator\OSEmulator --user policarp --pcn DESKTOP --vrtlos C:\\Users\\Policarp\\Desktop\\VirtualOS.zip --logpth C:\\Users\\Policarp\\Desktop\\log.txt --startsrc C:\\Users\\Policarp\\Desktop\\script.txt
-
+            //dotnet run --project C:\Users\Policarp\source\repos\OSEmulator\OSEmulator
+            //--user policarp --pcn DESKTOP --vrtlos C:\\Users\\Policarp\\Desktop\\VirtualOS.zip --logpth C:\\Users\\Policarp\\Desktop\\log.txt --startsrc C:\\Users\\Policarp\\Desktop\\script.txt
 
             OS system = OS.Init(args);
             system.Start();

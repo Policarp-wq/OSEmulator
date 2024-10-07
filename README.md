@@ -33,3 +33,8 @@ zip. Эмулятор должен работать в режиме CLI.
 • vrtlos - Путь до .zip архива с виртуальной ОС
 • logpth - Путь до лог-файла
 • startsrc - Путь до файла с начальным скриптом
+
+
+<strong>Пример запуска: start OSEmulator.exe --user policarp --pcn DESKTOP --vrtlos C:\\Users\\Policarp\\Desktop\\VirtualOS.zip --logpth C:\\Users\\Policarp\\Desktop\\log.txt --startsrc C:\\Users\\Policarp\\Desktop\\script.txt</strong>
+
+Для списка команд: help
